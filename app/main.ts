@@ -2,19 +2,28 @@
 import { serve } from "https://deno.land/std@0.207.0/http/server.ts";
 
 // WebSocket Connection Handler
-async function handleWebSocket(socket: WebSocket) {
+function handleWebSocket(socket: WebSocket) {
   console.log("WebSocket connected");
 
-  for await (const message of socket) {
-    if (typeof message === "string") {
-      console.log(`Received: ${message}`);
-      socket.send(`Echo: ${message}`); // Echo back the message
-    } else if (message instanceof Uint8Array) {
+  // Handling incoming messages
+  socket.onmessage = (event) => {
+    if (typeof event.data === "string") {
+      console.log(`Received: ${event.data}`);
+      socket.send(`Echo: ${event.data}`); // Echo back the message
+    } else if (event.data instanceof Uint8Array) {
       console.log("Binary data received");
-    } else if (message === "close") {
-      console.log("WebSocket connection closed");
     }
-  }
+  };
+
+  // Handling close event
+  socket.onclose = () => {
+    console.log("WebSocket connection closed");
+  };
+
+  // Handling error event
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
 }
 
 // HTTP Server with WebSocket upgrade
